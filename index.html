@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Pollo Cornejo | ERP v9.0 Responsive</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandBlue: '#0a2351',   
+                        brandYellow: '#facc15', 
+                        brandRed: '#ef4444',    
+                        bgSoft: '#f8fafc'      
+                    },
+                    fontFamily: { sans: ['Segoe UI', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos Responsive y Utilidades */
+        .category-header { position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,0.95); backdrop-filter: blur(5px); border-bottom: 2px solid #facc15; }
+        .nav-item.active { background-color: #facc15; color: #0a2351; font-weight: 800; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.4); }
+        canvas { animation: fadeIn 1s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Ocultar scrollbar pero permitir scroll */
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        #loader { position: fixed; inset: 0; background: #0a2351; z-index: 60; display: flex; justify-content: center; align-items: center; color: white; flex-direction: column; transition: opacity 0.5s; }
+        
+        /* Animación Menú Movil */
+        .sidebar-mobile { transform: translateX(-100%); transition: transform 0.3s ease-in-out; }
+        .sidebar-mobile.open { transform: translateX(0); }
+        
+        /* Overlay oscuro para movil */
+        #mobile-overlay { transition: opacity 0.3s; pointer-events: none; opacity: 0; }
+        #mobile-overlay.open { pointer-events: auto; opacity: 1; }
+    </style>
+</head>
+<body class="bg-bgSoft h-screen flex text-gray-800 overflow-hidden text-sm">
+
+    <div id="loader">
+        <div class="text-4xl mb-4"><i class='bx bxs-cloud-download bx-fade-down' ></i></div>
+        <h2 class="text-xl font-bold text-center px-4">Iniciando Pollo Cornejo ERP...</h2>
+    </div>
+
+    <div id="mobile-overlay" onclick="app.toggleSidebar()" class="fixed inset-0 bg-black/50 z-20 md:hidden"></div>
+
+    <aside id="sidebar" class="sidebar-mobile fixed inset-y-0 left-0 w-64 bg-brandBlue text-white flex flex-col shadow-2xl z-30 md:relative md:translate-x-0">
+        
+        <div class="h-20 flex items-center justify-between px-4 border-b border-white/10 bg-[#051535]">
+            <div class="flex flex-col justify-center w-full items-center">
+                <h1 class="text-xl font-black text-brandYellow tracking-wider uppercase text-center">POLLO CORNEJO</h1>
+                <span class="text-[10px] text-gray-400">ERP v9.0 Mobile Ready</span>
+            </div>
+            <button onclick="app.toggleSidebar()" class="md:hidden text-white text-2xl"><i class='bx bx-x'></i></button>
+        </div>
+
+        <nav class="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
+            <p class="px-3 text-[10px] font-bold text-gray-400 uppercase mb-2">Operaciones</p>
+            <a href="#" onclick="app.render('dashboard')" id="nav-dashboard" class="nav-item active flex items-center px-4 py-3 rounded-lg hover:bg-white/10 transition-all mb-1">
+                <i class='bx bxs-dashboard text-lg mr-3'></i><span>Dashboard</span>
+            </a>
+            
+            <a href="#" onclick="app.render('pedidos')" id="nav-pedidos" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-white/10 transition-all mb-1 justify-between group">
+                <div class="flex items-center"><i class='bx bxs-bell-ring text-lg mr-3'></i><span>PEDIDOS WEB</span></div>
+                <span id="sidebar-badge" class="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full hidden">0</span>
+            </a>
+
+            <a href="#" onclick="app.render('ventas')" id="nav-ventas" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-white/10 transition-all mb-1">
+                <i class='bx bxs-store-alt text-lg mr-3'></i><span>Ventas (POS)</span>
+            </a>
+            <a href="#" onclick="app.render('arqueo')" id="nav-arqueo" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-white/10 transition-all mb-1">
+                <i class='bx bxs-calculator text-lg mr-3'></i><span>Cierre de Caja</span>
+            </a>
+
+            <p class="px-3 text-[10px] font-bold text-gray-400 uppercase mb-2 mt-4">Gestión</p>
+            <a href="#" onclick="app.render('inventario')" id="nav-inventario" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-white/10 transition-all mb-1">
+                <i class='bx bxs-box text-lg mr-3'></i><span>Inventario</span>
+            </a>
+            <a href="#" onclick="app.render('compras')" id="nav-compras" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-white/10 transition-all mb-1">
+                <i class='bx bxs-truck text-lg mr-3'></i><span>Compras & Prov.</span>
+            </a>
+            <a href="#" onclick="app.render('caja')" id="nav-caja" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-white/10 transition-all mb-1">
+                <i class='bx bxs-wallet text-lg mr-3'></i><span>Gastos</span>
+            </a>
+            <a href="#" onclick="app.render('clientes')" id="nav-clientes" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-white/10 transition-all mb-1">
+                <i class='bx bxs-user-detail text-lg mr-3'></i><span>Clientes</span>
+            </a>
+        </nav>
+        
+        <div class="p-4 bg-[#051535] border-t border-white/10">
+            <button onclick="app.resetSystem()" class="text-xs text-red-400 hover:text-red-200 flex items-center w-full justify-center p-2 rounded hover:bg-white/5 transition"><i class='bx bxs-trash mr-2'></i> Reiniciar</button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col relative w-full"> <header class="h-16 bg-white shadow-sm flex justify-between items-center px-4 md:px-8 z-10 border-b shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="app.toggleSidebar()" class="md:hidden text-3xl text-brandBlue hover:text-brandYellow transition">
+                    <i class='bx bx-menu'></i>
+                </button>
+                <h2 id="page-title" class="text-lg md:text-xl font-bold text-brandBlue truncate">Dashboard</h2>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="text-right hidden sm:block">
+                    <p class="text-xs font-bold text-gray-600" id="current-date">Fecha</p>
+                    <p class="text-[10px] text-green-600 font-bold animate-pulse">● En Línea</p>
+                </div>
+                <div class="h-8 w-8 md:h-9 md:w-9 bg-brandYellow rounded-full flex items-center justify-center text-brandBlue font-bold shadow border-2 border-white">PC</div>
+            </div>
+        </header>
+
+        <div id="main-container" class="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 scroll-smooth">
+            </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- TU CONFIGURACIÓN FIREBASE ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyA05QuRRwcOpodY1EhCFukh4FCeemsVT6c",
+            authDomain: "pollosystem-78581.firebaseapp.com",
+            projectId: "pollosystem-78581",
+            storageBucket: "pollosystem-78581.firebasestorage.app",
+            messagingSenderId: "741830603704",
+            appId: "1:741830603704:web:b811b48495a599b157554d"
+        };
+
+        const appFirebase = initializeApp(firebaseConfig);
+        const db = getFirestore(appFirebase);
+
+        // ESTADO GLOBAL
+        const state = {
+            productos: [], ventas: [], gastos: [], clientes: [], proveedores: [], compras: [],
+            loaded: { prods: false, ventas: false, gastos: false }
+        };
+
+        // HELPERS
+        const money = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(v);
+        const iconMap = { 'Frescos': '🍗', 'Marinados': '🌶️', 'Embutidos': '🌭', 'Lacteos': '🧀' };
+        const getSafeDate = (isoString) => { const d = new Date(isoString); return isNaN(d) ? new Date().toLocaleDateString('es-SV') : d.toLocaleDateString('es-SV'); };
+
+        // REALTIME LISTENERS
+        function initRealTimeListeners() {
+            onSnapshot(collection(db, "productos"), (snap) => { state.productos = snap.docs.map(d => ({id:d.id, ...d.data()})); state.loaded.prods=true; checkLoad(); refreshCurrent(); });
+            onSnapshot(collection(db, "ventas"), (snap) => { state.ventas = snap.docs.map(d => ({id:d.id, ...d.data()})); state.loaded.ventas=true; updateBadges(); checkLoad(); refreshCurrent(); });
+            onSnapshot(collection(db, "gastos"), (snap) => { state.gastos = snap.docs.map(d => ({id:d.id, ...d.data()})); state.loaded.gastos=true; checkLoad(); refreshCurrent(); });
+            onSnapshot(collection(db, "clientes"), (snap) => { state.clientes = snap.docs.map(d => ({id:d.id, ...d.data()})); });
+            onSnapshot(collection(db, "proveedores"), (snap) => { state.proveedores = snap.docs.map(d => ({id:d.id, ...d.data()})); });
+            onSnapshot(collection(db, "compras"), (snap) => { state.compras = snap.docs.map(d => ({id:d.id, ...d.data()})); });
+        }
+
+        function checkLoad() {
+            if(state.loaded.prods && state.loaded.ventas && state.loaded.gastos) {
+                const l = document.getElementById('loader');
+                if(l) { l.style.opacity = '0'; setTimeout(() => l.remove(), 500); }
+            }
+        }
+
+        function refreshCurrent() {
+            if(window.currentModule && window.app && window.app.render) {
+                // Solo re-renderizar vistas que necesitan update constante
+                if(['dashboard','pedidos'].includes(window.currentModule)) {
+                    window.app.render(window.currentModule);
+                }
+            }
+        }
+
+        function updateBadges() {
+            const pendientes = state.ventas.filter(v => v.estado === 'PENDIENTE').length;
+            const badge = document.getElementById('sidebar-badge');
+            if(badge) {
+                badge.innerText = pendientes;
+                if(pendientes > 0) { badge.classList.remove('hidden'); badge.parentElement.classList.add('badge-pulse'); } 
+                else { badge.classList.add('hidden'); badge.parentElement.classList.remove('badge-pulse'); }
+            }
+        }
+
+        // APP CONTROLLER
+        window.app = {
+            carrito: [],
+            chart: null,
+            chartFilter: 'day',
+
+            init() {
+                initRealTimeListeners();
+                document.getElementById('current-date').innerText = new Date().toLocaleDateString('es-SV', { weekday:'long', day:'numeric', month:'long'});
+                this.render('dashboard');
+            },
+
+            // FUNCIÓN PARA MOSTRAR/OCULTAR MENÚ EN MOVIL
+            toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('mobile-overlay');
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('open');
+            },
+
+            render(module) {
+                window.currentModule = module;
+                // Cerrar menú automáticamente en móvil al seleccionar opción
+                const sidebar = document.getElementById('sidebar');
+                if(window.innerWidth < 768 && sidebar.classList.contains('open')) this.toggleSidebar();
+
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                const btn = document.getElementById(`nav-${module}`);
+                if(btn) btn.classList.add('active');
+                
+                const c = document.getElementById('main-container');
+                const t = document.getElementById('page-title');
+
+                if(!state.loaded.prods && module !== 'dashboard') {
+                    c.innerHTML = '<div class="text-center mt-10"><i class="bx bx-loader-alt bx-spin text-4xl text-brandBlue"></i><p>Cargando datos...</p></div>';
+                    return;
+                }
+
+                switch(module) {
+                    case 'dashboard': t.innerText = 'Dashboard Gerencial'; this.views.dashboard(c); break;
+                    case 'pedidos': t.innerText = 'Pedidos Web'; this.views.pedidos(c); break;
+                    case 'ventas': t.innerText = 'Punto de Venta'; this.views.ventas(c); break;
+                    case 'inventario': t.innerText = 'Inventario'; this.views.inventario(c); break;
+                    case 'compras': t.innerText = 'Compras'; this.views.compras(c); break;
+                    case 'caja': t.innerText = 'Gastos'; this.views.gastos(c); break;
+                    case 'clientes': t.innerText = 'Clientes'; this.views.clientes(c); break;
+                    case 'arqueo': t.innerText = 'Cierre Caja'; this.views.arqueo(c); break;
+                }
+            },
+
+            setChartFilter(filter) { this.chartFilter = filter; this.render('dashboard'); },
+
+            // ACCIONES DB
+            actions: {
+                async addProd(data) { await addDoc(collection(db, "productos"), data); },
+                async updateProd(id, data) { await updateDoc(doc(db, "productos", id), data); },
+                async delProd(id) { await deleteDoc(doc(db, "productos", id)); },
+                async addVenta(data) { 
+                    await addDoc(collection(db, "ventas"), data); 
+                    for (const item of data.items) {
+                        const prodRef = doc(db, "productos", item.id);
+                        const currentProd = state.productos.find(p => p.id === item.id);
+                        if(currentProd) await updateDoc(prodRef, { stock: currentProd.stock - item.qty });
+                    }
+                },
+                async updatePedidoStatus(id, newStatus) {
+                    const pedido = state.ventas.find(v => v.id === id);
+                    if(!pedido) return;
+                    try {
+                        if(newStatus === 'CANCELADO' && pedido.estado !== 'CANCELADO') {
+                            await runTransaction(db, async (transaction) => {
+                                for (const item of pedido.items) {
+                                    const prodRef = doc(db, "productos", item.id);
+                                    const sfDoc = await transaction.get(prodRef);
+                                    if(sfDoc.exists()) { transaction.update(prodRef, { stock: sfDoc.data().stock + item.qty }); }
+                                }
+                                const pedRef = doc(db, "ventas", id);
+                                transaction.update(pedRef, { estado: newStatus });
+                            });
+                            Swal.fire('Cancelado', 'Stock devuelto', 'success');
+                        } else {
+                            await updateDoc(doc(db, "ventas", id), { estado: newStatus });
+                            Swal.fire('Listo', `Pedido ${newStatus}`, 'success');
+                        }
+                    } catch (e) { console.error(e); Swal.fire('Error', 'Falló actualización', 'error'); }
+                },
+                async addGasto(data) { await addDoc(collection(db, "gastos"), data); },
+                async addCliente(data) { await addDoc(collection(db, "clientes"), data); },
+                async updateCliente(id, data) { await updateDoc(doc(db, "clientes", id), data); },
+                async addProv(data) { await addDoc(collection(db, "proveedores"), data); },
+                async updateProv(id, data) { await updateDoc(doc(db, "proveedores", id), data); },
+                async addCompra(data) {
+                    await addDoc(collection(db, "compras"), data);
+                    const currentProd = state.productos.find(p => p.id === data.prodId);
+                    if(currentProd) await updateDoc(doc(db, "productos", data.prodId), { stock: currentProd.stock + data.cant });
+                    await addDoc(collection(db, "gastos"), { fecha: new Date().toISOString(), desc: `Compra Mercadería: ${data.prodNombre}`, tipo: 'Costo', monto: data.costoTotal });
+                }
+            },
+
+            views: {
+                dashboard(c) {
+                    const { ventas, gastos, productos } = state;
+                    const ventasReales = ventas.filter(v => v.estado !== 'PENDIENTE' && v.estado !== 'CANCELADO');
+                    const pedidosPendientes = ventas.filter(v => v.estado === 'PENDIENTE');
+                    const totalIngresos = ventasReales.reduce((s, v) => s + v.total, 0);
+                    let costoVentas = 0;
+                    ventasReales.forEach(v => { if(v.items) v.items.forEach(item => { const p = productos.find(prod => prod.id === item.id); costoVentas += ((p ? p.costo : (item.costo || 0)) * item.qty); }); });
+                    const totalGastosOp = gastos.filter(g => g.tipo !== 'Costo').reduce((s, g) => s + g.monto, 0);
+                    const rentabilidad = totalIngresos - costoVentas - totalGastosOp;
+                    const stockBajo = productos.filter(p => p.stock <= p.min);
+
+                    c.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6">
+                            <div onclick="app.render('pedidos')" class="cursor-pointer bg-white p-5 rounded-xl shadow-sm border-l-4 border-red-500 hover:shadow-md transition group">
+                                <div class="flex justify-between items-center"><p class="text-[10px] text-gray-500 uppercase font-bold group-hover:text-red-500">Pedidos Web</p>${pedidosPendientes.length > 0 ? '<span class="flex h-3 w-3 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span></span>' : ''}</div>
+                                <h3 class="text-3xl font-black text-gray-800 group-hover:text-red-600">${pedidosPendientes.length}</h3><p class="text-[10px] text-gray-400">Pendientes</p>
+                            </div>
+                            <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-brandBlue"><p class="text-[10px] text-gray-500 uppercase font-bold">Ventas Reales</p><h3 class="text-2xl font-black text-gray-800">${money(totalIngresos)}</h3></div>
+                            <div class="bg-white p-5 rounded-xl shadow-sm border-l-4 border-brandRed"><p class="text-[10px] text-gray-500 uppercase font-bold">Gastos Op.</p><h3 class="text-2xl font-black text-brandRed">-${money(totalGastosOp)}</h3></div>
+                            <div class="bg-gradient-to-br ${rentabilidad >=0 ? 'from-green-50 to-green-100 border-green-500' : 'from-red-50 to-red-100 border-red-500'} p-5 rounded-xl shadow-sm border-l-4 border"><p class="text-[10px] text-gray-600 uppercase font-bold flex items-center gap-1"><i class='bx bxs-pie-chart-alt-2'></i> Rentabilidad</p><h3 class="text-3xl font-black ${rentabilidad >=0 ? 'text-green-700' : 'text-red-700'}">${money(rentabilidad)}</h3></div>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="lg:col-span-2 bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-100">
+                                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2"><h3 class="font-bold text-gray-700">Tendencias</h3><div class="flex bg-gray-100 p-1 rounded-lg w-full md:w-auto justify-center"><button onclick="app.setChartFilter('day')" class="filter-btn flex-1 md:flex-none px-3 py-1 text-xs rounded transition text-gray-500 ${app.chartFilter==='day'?'active':''}">Día</button><button onclick="app.setChartFilter('week')" class="filter-btn flex-1 md:flex-none px-3 py-1 text-xs rounded transition text-gray-500 ${app.chartFilter==='week'?'active':''}">Sem</button><button onclick="app.setChartFilter('month')" class="filter-btn flex-1 md:flex-none px-3 py-1 text-xs rounded transition text-gray-500 ${app.chartFilter==='month'?'active':''}">Mes</button></div></div>
+                                <div class="h-64 w-full relative"><canvas id="mainChart"></canvas></div>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col">
+                                <div class="flex items-center justify-between mb-4 pb-2 border-b"><h3 class="font-bold text-gray-700">⚠ Alertas Stock</h3><span class="bg-red-100 text-red-600 text-xs px-2 py-1 rounded font-bold">${stockBajo.length}</span></div>
+                                <div class="flex-1 overflow-y-auto space-y-3 pr-2 max-h-64">${stockBajo.map(p => `<div class="flex justify-between items-center bg-red-50 p-3 rounded-lg border border-red-100"><div><p class="font-bold text-sm text-gray-800 flex items-center gap-1"><i class='bx bxs-error-circle text-red-500'></i> ${p.nombre}</p><p class="text-[10px] text-gray-500 pl-4">Quedan: <b>${p.stock}</b></p></div><button onclick="app.render('compras')" class="text-xs bg-brandBlue text-white px-3 py-1.5 rounded shadow">Comprar</button></div>`).join('')}</div>
+                            </div>
+                        </div>
+                    `;
+                    setTimeout(() => app.renderChart(ventasReales, gastos), 150);
+                },
+
+                pedidos(c) {
+                    const pendientes = state.ventas.filter(v => v.estado === 'PENDIENTE').sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+                    c.innerHTML = `
+                        <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-2"><div><h3 class="font-bold text-xl text-brandBlue">Pedidos Web</h3><p class="text-sm text-gray-500">Gestión de órdenes online</p></div><span class="bg-red-100 text-red-600 px-3 py-1 rounded-full text-xs font-bold border border-red-200">${pendientes.length} Pendientes</span></div>
+                        ${pendientes.length === 0 ? `<div class="flex flex-col items-center justify-center h-64 bg-white rounded-xl border-2 border-dashed border-gray-200"><i class='bx bx-check-circle text-6xl text-green-200'></i><p class="text-gray-400 font-bold mt-2">Todo al día</p></div>` : 
+                        `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">${pendientes.map(p => `<div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden relative"><div class="bg-brandBlue text-white p-3 flex justify-between items-center"><span class="font-bold text-brandYellow">#${p.id.slice(0,6)}</span><span class="text-xs opacity-80">${new Date(p.fecha).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span></div><div class="p-4"><div class="flex items-start gap-3 mb-4"><div class="bg-gray-100 p-2 rounded-full"><i class='bx bxs-user text-xl text-gray-500'></i></div><div class="overflow-hidden"><h4 class="font-bold text-gray-800 truncate">${p.cliente}</h4><p class="text-xs text-gray-500"><i class='bx bxs-phone'></i> ${p.tel}</p><p class="text-xs text-gray-500 mt-1 bg-yellow-50 p-1 rounded border border-yellow-100 truncate"><i class='bx bxs-map'></i> ${p.dir}</p></div></div><div class="border-t border-b py-3 mb-4 space-y-2 max-h-32 overflow-y-auto">${p.items.map(i => `<div class="flex justify-between text-sm"><span class="text-gray-600">${i.qty}x ${i.nombre}</span><span class="font-bold text-gray-800">$${(i.precio*i.qty).toFixed(2)}</span></div>`).join('')}</div><div class="flex justify-between items-center mb-4"><span class="text-gray-400 text-xs font-bold uppercase">Total</span><span class="text-2xl font-black text-brandBlue">${money(p.total)}</span></div><div class="grid grid-cols-2 gap-3"><button onclick="app.actions.updatePedidoStatus('${p.id}', 'CANCELADO')" class="border border-red-200 text-red-500 hover:bg-red-50 font-bold py-2 rounded-lg text-xs transition">Rechazar</button><button onclick="app.actions.updatePedidoStatus('${p.id}', 'COMPLETADO')" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg text-xs transition shadow-lg shadow-green-200">Despachar</button></div></div></div>`).join('')}</div>`}
+                    `;
+                },
+
+                ventas(c) {
+                    const prods = state.productos; const cats = ['Frescos', 'Marinados', 'Embutidos', 'Lacteos']; const clientes = state.clientes; const totalC = app.carrito.reduce((s,i)=>s+(i.precio*i.qty),0);
+                    c.innerHTML = `
+                        <div class="flex flex-col lg:flex-row gap-4 h-[calc(100vh-140px)]">
+                            <div class="lg:w-2/3 overflow-y-auto pr-2 pb-10">
+                                ${cats.map(cat => `<div class="mb-6"><div class="category-header py-2 mb-2 flex items-center gap-2"><span class="text-xl">${iconMap[cat]}</span><h3 class="font-bold text-brandBlue uppercase tracking-wider text-xs">${cat}</h3></div><div class="grid grid-cols-2 md:grid-cols-3 gap-3">${prods.filter(p => p.cat === cat).map(p => `<div onclick="app.pos.add('${p.id}')" class="bg-white p-3 rounded-lg shadow-sm border border-gray-100 hover:border-brandYellow cursor-pointer transition relative group hover:shadow-md"><h4 class="font-bold text-gray-700 text-sm leading-tight pr-2 truncate">${p.nombre}</h4><p class="text-[10px] text-gray-400 mt-1">Stock: ${p.stock}</p><p class="text-brandBlue font-bold mt-2">$${p.precio.toFixed(2)}</p>${p.stock<=p.min ? '<div class="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500"></div>':''}</div>`).join('')}</div></div>`).join('')}
+                            </div>
+                            <div class="lg:w-1/3 bg-white rounded-xl shadow-lg flex flex-col border border-gray-200 lg:h-full h-auto">
+                                <div class="p-4 bg-brandBlue text-white rounded-t-xl"><h3 class="font-bold flex items-center gap-2"><i class='bx bxs-cart'></i> Pedido</h3></div>
+                                <div class="p-2 border-b"><select id="pos-cli" class="w-full text-xs p-2 border rounded bg-gray-50"><option value="General">Cliente General</option>${clientes.map(cl=>`<option value="${cl.id}">${cl.nombre}</option>`).join('')}</select></div>
+                                <div class="flex-1 overflow-y-auto p-2 space-y-2 min-h-[150px]">
+                                    ${app.carrito.map((item, idx) => `<div class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-100"><div class="w-1/3 truncate"><p class="font-bold text-xs text-gray-800 truncate">${item.nombre}</p><p class="text-[10px] text-gray-500">$${item.precio}</p></div><div class="flex items-center bg-white rounded border"><button onclick="app.pos.update(${idx}, -1)" class="px-2 hover:bg-gray-100 text-brandRed font-bold">-</button><input type="number" value="${item.qty}" class="w-8 text-center text-xs font-bold border-x outline-none bg-transparent" readonly><button onclick="app.pos.update(${idx}, 1)" class="px-2 hover:bg-gray-100 text-green-600 font-bold">+</button></div><div class="text-right w-1/4"><p class="font-bold text-sm">$${(item.precio*item.qty).toFixed(2)}</p></div></div>`).join('')}
+                                </div>
+                                <div class="p-4 border-t bg-gray-50 rounded-b-xl"><div class="flex justify-between items-center mb-4"><span class="text-gray-500 font-bold">TOTAL</span><span class="text-3xl font-black text-brandBlue">${money(totalC)}</span></div><button onclick="app.pos.checkout()" class="w-full bg-brandYellow py-3 rounded-lg font-bold text-brandBlue shadow-lg hover:shadow-xl transition uppercase tracking-wide">Cobrar</button></div>
+                            </div>
+                        </div>
+                    `;
+                },
+
+                inventario(c) {
+                    const prods = state.productos;
+                    c.innerHTML = `<div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-2"><h3 class="font-bold text-lg text-brandBlue">Catálogo</h3><button onclick="app.inv.addModal()" class="w-full md:w-auto bg-brandBlue text-white px-4 py-2 rounded-lg text-xs font-bold flex justify-center items-center gap-2 hover:bg-blue-900 shadow"><i class='bx bx-plus'></i> Nuevo</button></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${prods.map(p => `<div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative group hover:shadow-md transition"><div class="absolute top-4 right-4 text-2xl opacity-10">${iconMap[p.cat]}</div><div class="flex justify-between items-start mb-2"><span class="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded uppercase font-bold">${p.cat}</span></div><h4 class="font-bold text-gray-800 text-lg mb-1 truncate">${p.nombre}</h4><div class="flex items-center justify-between bg-gray-50 p-2 rounded mb-3 text-xs"><div><span class="text-gray-400 block">Costo</span>$${p.costo.toFixed(2)}</div><div><span class="text-gray-400 block">Venta</span><span class="font-bold text-brandBlue">$${p.precio.toFixed(2)}</span></div><div><span class="text-gray-400 block">Stock</span><span class="font-bold ${p.stock<=p.min?'text-red-500':'text-green-600'}">${p.stock}</span></div></div><div class="flex gap-2"><button onclick="app.inv.edit('${p.id}')" class="flex-1 bg-white border border-gray-200 text-gray-600 py-1 rounded text-xs hover:bg-gray-50">Editar</button><button onclick="app.inv.del('${p.id}')" class="px-3 bg-red-50 text-red-500 rounded hover:bg-red-100"><i class='bx bxs-trash'></i></button></div></div>`).join('')}</div>`;
+                },
+
+                compras(c) {
+                    const provs = state.proveedores; const prods = state.productos; const compras = state.compras;
+                    c.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-140px)]"><div class="bg-white p-6 rounded-xl shadow-sm flex flex-col overflow-y-auto"><h3 class="font-bold text-brandBlue mb-4 border-b pb-2">Entrada Mercadería</h3><form id="form-compra" class="space-y-3"><div><label class="text-xs font-bold text-gray-500">Proveedor</label><select id="c-prov" class="w-full border p-2 rounded bg-gray-50 text-sm">${provs.map(p => `<option value="${p.id}">${p.nombre}</option>`).join('')}</select></div><div><label class="text-xs font-bold text-gray-500">Producto</label><select id="c-prod" class="w-full border p-2 rounded bg-gray-50 text-sm">${prods.map(p => `<option value="${p.id}">${p.nombre} (Stock: ${p.stock})</option>`).join('')}</select></div><div class="grid grid-cols-2 gap-3"><div><label class="text-xs font-bold text-gray-500">Cantidad</label><input type="number" id="c-cant" class="w-full border p-2 rounded" required></div><div><label class="text-xs font-bold text-gray-500">Costo Total ($)</label><input type="number" id="c-costo" step="0.01" class="w-full border p-2 rounded" required></div></div><button type="submit" class="w-full bg-green-600 text-white py-2 rounded font-bold hover:bg-green-700 mt-2">Registrar (+ Stock)</button></form><div class="mt-6 border-t pt-4"><h4 class="font-bold text-xs text-gray-500 uppercase mb-2">Historial</h4><div class="text-xs space-y-2">${compras.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5).map(h => `<div class="flex justify-between p-2 bg-gray-50 rounded border-l-2 border-green-500"><span>${h.prodNombre}</span><span class="font-bold">+${h.cant}</span></div>`).join('')}</div></div></div><div class="bg-white p-6 rounded-xl shadow-sm flex flex-col overflow-y-auto"><div class="flex justify-between items-center mb-4 border-b pb-2"><h3 class="font-bold text-brandBlue">Proveedores</h3><button onclick="app.prov.add()" class="text-xs bg-brandYellow text-brandBlue px-3 py-1 rounded font-bold">Nuevo</button></div><div class="space-y-3">${provs.map(p => `<div class="p-3 border rounded-lg hover:bg-gray-50 group relative"><div class="font-bold text-gray-800">${p.nombre}</div><div class="text-xs text-gray-500"><i class='bx bxs-phone'></i> ${p.tel}</div><button onclick="app.prov.edit('${p.id}')" class="absolute top-2 right-2 text-brandBlue opacity-0 group-hover:opacity-100"><i class='bx bxs-edit'></i></button></div>`).join('')}</div></div></div>`; document.getElementById('form-compra').addEventListener('submit', app.compra.save);
+                },
+
+                gastos(c) {
+                    const list = state.gastos;
+                    c.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="bg-white p-6 rounded-xl shadow-sm h-fit"><h3 class="font-bold mb-4 text-brandRed border-b pb-2">Registrar Gasto</h3><form id="form-gasto" class="space-y-3"><label class="text-xs font-bold text-gray-500">Descripción</label><input id="g-desc" class="w-full border p-2 rounded bg-gray-50" placeholder="Ej. Luz" required><label class="text-xs font-bold text-gray-500">Tipo</label><select id="g-tipo" class="w-full border p-2 rounded bg-gray-50"><option value="Fijo">Fijo</option><option value="Variable">Variable</option></select><label class="text-xs font-bold text-gray-500">Monto</label><input id="g-monto" type="number" step="0.01" class="w-full border p-2 rounded bg-gray-50" placeholder="0.00" required><button type="submit" class="w-full bg-brandRed text-white py-2 rounded font-bold hover:bg-red-600 mt-2">Guardar</button></form></div><div class="md:col-span-2 bg-white rounded-xl shadow-sm overflow-hidden flex flex-col max-h-[500px]"><div class="p-4 bg-gray-50 font-bold text-gray-600 border-b">Historial</div><div class="overflow-y-auto p-0"><table class="w-full text-left text-sm"><thead class="text-gray-400 border-b bg-white sticky top-0"><tr><th class="p-3">Fecha</th><th class="p-3">Desc</th><th class="p-3">Tipo</th><th class="p-3 text-right">Monto</th></tr></thead><tbody>${list.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).map(g => `<tr class="border-b hover:bg-gray-50"><td class="p-3 text-xs text-gray-400">${new Date(g.fecha).toLocaleDateString()}</td><td class="p-3 font-medium text-gray-700">${g.desc}</td><td class="p-3"><span class="text-[10px] px-2 py-1 rounded font-bold ${g.tipo==='Costo'?'bg-gray-200 text-gray-600':(g.tipo==='Fijo'?'bg-blue-100 text-blue-600':'bg-orange-100 text-orange-600')}">${g.tipo}</span></td><td class="p-3 text-right font-bold text-brandRed">-${money(g.monto)}</td></tr>`).join('')}</tbody></table></div></div></div>`; document.getElementById('form-gasto').addEventListener('submit', app.gasto.save);
+                },
+
+                clientes(c) {
+                    const list = state.clientes; c.innerHTML = `<div class="bg-white p-6 rounded-xl shadow-sm mb-6"><h3 class="font-bold text-brandBlue mb-4">Registro Cliente</h3><form id="form-cli" class="grid grid-cols-1 md:grid-cols-2 gap-4"><input id="c-nom" class="border p-2 rounded" placeholder="Nombre" required><input id="c-tel" class="border p-2 rounded" placeholder="Teléfono"><input id="c-dir" class="border p-2 rounded" placeholder="Dirección"><input id="c-desc" class="border p-2 rounded" placeholder="Notas"><button class="md:col-span-2 bg-brandBlue text-white py-2 rounded font-bold">Guardar</button></form></div><div class="bg-white rounded-xl shadow-sm overflow-hidden overflow-x-auto"><table class="w-full text-left text-sm min-w-[500px]"><thead class="bg-gray-100 text-xs uppercase text-gray-500"><tr><th class="p-4">Cliente</th><th class="p-4">Contacto</th><th class="p-4">Dirección</th><th class="p-4">Acción</th></tr></thead><tbody class="divide-y">${list.map(l => `<tr><td class="p-4 font-bold">${l.nombre}<br><span class="text-xs text-gray-400 font-normal">${l.desc||''}</span></td><td class="p-4 text-gray-500">${l.tel}</td><td class="p-4 text-gray-500">${l.dir || '-'}</td><td class="p-4"><button onclick="app.cli.edit('${l.id}')" class="text-blue-600 hover:underline">Editar</button></td></tr>`).join('')}</tbody></table></div>`; document.getElementById('form-cli').addEventListener('submit', (e)=>{ e.preventDefault(); app.actions.addCliente({fecha: new Date().toISOString(), nombre:document.getElementById('c-nom').value, tel:document.getElementById('c-tel').value, dir:document.getElementById('c-dir').value, desc:document.getElementById('c-desc').value}); });
+                },
+
+                arqueo(c) {
+                    c.innerHTML = `<div class="max-w-md mx-auto bg-white rounded-xl shadow-lg border border-gray-200 p-6"><h2 class="font-bold text-brandBlue text-center text-xl mb-1">Cierre de Caja</h2><div class="grid grid-cols-2 gap-3 mb-6 mt-6">${[20,10,5,1,0.25,0.10,0.05,0.01].map(d => `<div class="flex items-center border rounded-lg p-2 bg-gray-50"><span class="w-12 text-sm font-bold text-gray-500 text-right mr-3">$${d}</span><input type="number" class="w-full bg-transparent outline-none font-bold text-brandBlue arq-inp" data-val="${d}" placeholder="0" oninput="app.arqCalc()"></div>`).join('')}</div><div class="bg-brandBlue p-4 rounded-xl text-center mb-4 shadow-lg"><p class="text-xs text-brandYellow font-bold uppercase">Total Físico</p><h3 id="arq-res" class="text-3xl font-black text-white">$0.00</h3></div><button onclick="Swal.fire('Guardado','Arqueo registrado','success')" class="w-full bg-gray-200 text-gray-600 py-3 rounded-xl font-bold hover:bg-gray-300">Guardar Cierre</button></div>`;
+                }
+            },
+
+            // LOGICA GRAFICA
+            renderChart(ventas, gastos) {
+                const ctx = document.getElementById('mainChart');
+                if(!ctx) return;
+                if(this.chart) this.chart.destroy();
+                const filter = this.chartFilter;
+                const getKey = (dateStr) => {
+                    const d = new Date(dateStr);
+                    if(filter === 'day') return d.toLocaleDateString('es-SV');
+                    if(filter === 'month') return d.toLocaleDateString('es-SV', {month: 'short', year: 'numeric'});
+                    if(filter === 'week') { const day = d.getDay(); const diff = d.getDate() - day + (day == 0 ? -6:1); const monday = new Date(d.setDate(diff)); return `Sem ${monday.getDate()}/${monday.getMonth()+1}`; }
+                };
+                const getSortTime = (dateStr) => new Date(dateStr).getTime();
+                const allEvents = [...ventas.map(v => ({...v, type:'venta', time: getSortTime(v.fecha)})), ...gastos.map(g => ({...g, type:'gasto', time: getSortTime(g.fecha)}))].sort((a,b) => a.time - b.time);
+                const groupedData = {};
+                allEvents.forEach(e => {
+                    const key = getKey(e.fecha);
+                    if(!groupedData[key]) groupedData[key] = { ventas: 0, gastos: 0 };
+                    if(e.type === 'venta') groupedData[key].ventas += e.total;
+                    if(e.type === 'gasto') groupedData[key].gastos += e.monto;
+                });
+                const labels = Object.keys(groupedData);
+                const dataVentas = labels.map(k => groupedData[k].ventas);
+                const dataGastos = labels.map(k => groupedData[k].gastos);
+                if(labels.length === 0) { labels.push(new Date().toLocaleDateString('es-SV')); dataVentas.push(0); dataGastos.push(0); }
+                this.chart = new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'Ventas Reales', data: dataVentas, borderColor: '#0a2351', backgroundColor: '#0a2351', tension: 0.3 }, { label: 'Egresos', data: dataGastos, borderColor: '#ef4444', backgroundColor: '#ef4444', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false } });
+            },
+
+            pos: {
+                add(id) { const p = state.productos.find(x => x.id === id); if(p.stock <= 0) return Swal.fire({icon:'warning', title:'Agotado', toast:true, position:'top-end', timer:1500, showConfirmButton:false}); const item = app.carrito.find(x => x.id === id); if(item) { if(item.qty < p.stock) item.qty++; } else { app.carrito.push({...p, qty:1}); } app.render('ventas'); },
+                update(idx, d) { const item = app.carrito[idx]; const p = state.productos.find(x=>x.id===item.id); if(d>0 && item.qty>=p.stock) return; item.qty += d; if(item.qty <= 0) app.carrito.splice(idx,1); app.render('ventas'); },
+                checkout() { if(app.carrito.length===0) return; Swal.fire({ title: 'Cobrar', text: `Total: ${money(app.carrito.reduce((s,i)=>s+(i.precio*i.qty),0))}`, icon: 'info', showCancelButton: true, confirmButtonColor:'#facc15', confirmButtonText:'Confirmar' }).then(r => { if(r.isConfirmed) { const total = app.carrito.reduce((s,i)=>s+(i.precio*i.qty),0); app.actions.addVenta({ fecha: new Date().toISOString(), total, items: app.carrito, cliente: document.getElementById('pos-cli').value }); app.carrito = []; app.render('ventas'); Swal.fire({icon:'success', title:'Venta Exitosa', timer:1500, showConfirmButton:false}); } }); }
+            },
+            inv: {
+                addModal() { Swal.fire({ title: 'Nuevo', html: `<input id="s-nom" class="swal2-input" placeholder="Nombre"><input id="s-img" class="swal2-input" placeholder="Imagen URL"><select id="s-cat" class="swal2-input"><option>Frescos</option><option>Marinados</option><option>Embutidos</option><option>Lacteos</option></select><input id="s-unit" class="swal2-input" placeholder="Unidad"><div class="flex gap-2"><input id="s-costo" type="number" class="swal2-input" placeholder="Costo"><input id="s-precio" type="number" class="swal2-input" placeholder="Venta"></div><div class="flex gap-2"><input id="s-stock" type="number" class="swal2-input" placeholder="Stock"><input id="s-min" type="number" class="swal2-input" placeholder="Min"></div>`, preConfirm: () => ({ nombre: document.getElementById('s-nom').value, img: document.getElementById('s-img').value, cat: document.getElementById('s-cat').value, unit: document.getElementById('s-unit').value, costo: parseFloat(document.getElementById('s-costo').value), precio: parseFloat(document.getElementById('s-precio').value), stock: parseInt(document.getElementById('s-stock').value), min: parseInt(document.getElementById('s-min').value) }) }).then(r => { if(r.isConfirmed) app.actions.addProd(r.value); }); },
+                edit(id) { const p = state.productos.find(x=>x.id===id); Swal.fire({ title: 'Editar', html: `<input id="e-nom" class="swal2-input" value="${p.nombre}"><input id="e-img" class="swal2-input" value="${p.img||''}"><select id="e-cat" class="swal2-input"><option ${p.cat==='Frescos'?'selected':''}>Frescos</option><option ${p.cat==='Marinados'?'selected':''}>Marinados</option><option ${p.cat==='Embutidos'?'selected':''}>Embutidos</option><option ${p.cat==='Lacteos'?'selected':''}>Lacteos</option></select><div class="grid grid-cols-2 gap-2 mt-2"><div><label class="text-xs">Costo</label><input id="e-costo" type="number" class="swal2-input" value="${p.costo}"></div><div><label class="text-xs">Venta</label><input id="e-precio" type="number" class="swal2-input" value="${p.precio}"></div></div>`, preConfirm: () => ({ nombre: document.getElementById('e-nom').value, img: document.getElementById('e-img').value, cat: document.getElementById('e-cat').value, costo: parseFloat(document.getElementById('e-costo').value), precio: parseFloat(document.getElementById('e-precio').value) }) }).then(r => { if(r.isConfirmed) app.actions.updateProd(id, r.value); }); },
+                del(id) { if(confirm('¿Borrar?')) app.actions.delProd(id); }
+            },
+            compra: { save(e) { e.preventDefault(); const prodId = document.getElementById('c-prod').value; const prod = state.productos.find(p => p.id === prodId); app.actions.addCompra({ fecha: new Date().toISOString(), prodId, prodNombre: prod.nombre, cant: parseFloat(document.getElementById('c-cant').value), costoTotal: parseFloat(document.getElementById('c-costo').value) }); Swal.fire('Registrado','','success'); app.render('compras'); } },
+            prov: {
+                add() { Swal.fire({ title: 'Proveedor', html: '<input id="p-nom" class="swal2-input" placeholder="Nombre"><input id="p-tel" class="swal2-input" placeholder="Tel"><input id="p-desc" class="swal2-input" placeholder="Desc">', preConfirm: () => ({ nombre: document.getElementById('p-nom').value, tel: document.getElementById('p-tel').value, desc: document.getElementById('p-desc').value }) }).then(r => { if(r.isConfirmed) app.actions.addProv(r.value); }); },
+                edit(id) { const p = state.proveedores.find(x=>x.id===id); Swal.fire({ title: 'Editar', html: `<input id="p-nom" class="swal2-input" value="${p.nombre}"><input id="p-tel" class="swal2-input" value="${p.tel}"><input id="p-desc" class="swal2-input" value="${p.desc}">`, preConfirm: () => ({ nombre: document.getElementById('p-nom').value, tel: document.getElementById('p-tel').value, desc: document.getElementById('p-desc').value }) }).then(r => { if(r.isConfirmed) app.actions.updateProv(id, r.value); }); }
+            },
+            gasto: { save(e) { e.preventDefault(); app.actions.addGasto({ fecha: new Date().toISOString(), desc: document.getElementById('g-desc').value, tipo: document.getElementById('g-tipo').value, monto: parseFloat(document.getElementById('g-monto').value) }); Swal.fire('Guardado','','success'); app.render('caja'); } },
+            cli: { edit(id) { const c = state.clientes.find(x=>x.id===id); Swal.fire({ html: `<input id="e-nom" class="swal2-input" value="${c.nombre}"><input id="e-tel" class="swal2-input" value="${c.tel}"><input id="e-dir" class="swal2-input" value="${c.dir||''}">`, preConfirm: () => ({ nombre: document.getElementById('e-nom').value, tel: document.getElementById('e-tel').value, dir: document.getElementById('e-dir').value }) }).then(r => { if(r.isConfirmed) app.actions.updateCliente(id, r.value); }); } },
+            arqCalc() { let t = 0; document.querySelectorAll('.arq-inp').forEach(i => t += (parseFloat(i.dataset.val) * (parseFloat(i.value)||0))); document.getElementById('arq-res').innerText = money(t); },
+            resetSystem() { if(confirm('¿Borrar TODO?')) Swal.fire('Acción bloqueada en Cloud','Para borrar, usa la consola de Firebase','info'); }
+        };
+
+        app.init();
+    </script>
+</body>
+</html>
